@@ -11,6 +11,15 @@ var (
   kLocation *time.Location
 )
 
+func TestRandom(t *testing.T) {
+  r := recurring.Random(time.Minute, time.Hour)
+  stream := r.ForTime(time.Date(2017, 1, 7, 16, 0, 0, 0, kLocation))
+  var tm time.Time
+  for i := 0; i < 6; i++ {
+     stream.Next(&tm)
+  }
+}
+
 func TestEachSunset(t *testing.T) {
   r := recurring.EachSunset(40.0, -120.0)
   stream := r.ForTime(time.Date(2013, 1, 7, 16, 51, 0, 0, kLocation))

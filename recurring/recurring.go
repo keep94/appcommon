@@ -4,6 +4,8 @@ package recurring
 import (
   "github.com/keep94/gofunctional3/functional"
   "github.com/keep94/sunrise"
+  "math"
+  "math/rand"
   tasks_recurring "github.com/keep94/tasks/recurring"
   "time"
 )
@@ -43,6 +45,18 @@ func OnOrBefore(r tasks_recurring.R, hour, min int) tasks_recurring.R {
   })
 }
 
+// Random returns random times at least min apart. The expected difference
+// between the times is min + expectedAddition.
+func Random(min, expectedAddition time.Duration) tasks_recurring.R {
+  return tasks_recurring.RFunc(func(t time.Time) functional.Stream {
+    return &random{
+        current: t,
+        min: min,
+        expectedAddition: expectedAddition,
+    }
+  })
+}
+
 type sunsetIterator struct {
   sunrise.Sunrise
 }
@@ -55,6 +69,26 @@ func (s *sunsetIterator) Next(ptr interface{}) error {
 }
 
 func (s *sunsetIterator) Close() error {
+  return nil
+}
+
+type random struct {
+  current time.Time
+  min time.Duration
+  expectedAddition time.Duration
+}
+
+func (r *random) Next(ptr interface{}) error {
+  r.current = r.current.Add(r.min)
+  r.current = r.current.Add(
+      time.Duration(
+          -1.0 * math.Log(1.0 - rand.Float64()) * float64(r.expectedAddition)))
+  p := ptr.(*time.Time)
+  *p = r.current
+  return nil
+}
+
+func (r *random) Close() error {
   return nil
 }
 
@@ -97,4 +131,8 @@ func (h *happensBefore) adjust(t time.Time) time.Time {
 
 func toHourMinute(hour, min int) int {
   return 60 * hour + min
+}
+
+func init() {
+  rand.Seed(time.Now().UnixNano())
 }
